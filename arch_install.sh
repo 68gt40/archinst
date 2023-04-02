@@ -309,7 +309,7 @@ install_packages() {
     # Netcfg
     if [ -n "$WIRELESS_DEVICE" ]
     then
-        packages+=' ifplugd dialog wireless_tools wpa_actiond'
+        packages+=' ifplugd dialog wireless_tools '
     fi
 
     # Java stuff
