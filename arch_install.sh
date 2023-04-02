@@ -294,7 +294,7 @@ install_packages() {
     local packages=''
 
     # General utilities/libraries
-    packages+=' vim alacritty alsa-utils aspell-en cpupower gvim mlocate net-tools ntp openssh p7zip pkgfile powertop rfkill rsync sudo unzip wget zip systemd-sysvcompat '
+    packages+=' vim alacritty alsa-utils aspell-en cpupower mlocate net-tools ntp openssh p7zip pkgfile powertop rfkill rsync sudo unzip wget zip systemd-sysvcompat '
 
     # Development packages
     packages+=' make gcc perl git '
