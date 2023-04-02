@@ -301,10 +301,10 @@ install_packages() {
     local packages=''
 
     # General utilities/libraries
-    packages+=' vim alacritty alsa-utils aspell-en chromium cpupower gvim mlocate net-tools ntp openssh p7zip pkgfile powertop python python2 rfkill rsync sudo unrar unzip wget zip systemd-sysvcompat zsh grml-zsh-config'
+    packages+=' vim alacritty alsa-utils aspell-en cpupower gvim mlocate net-tools ntp openssh p7zip pkgfile powertop rfkill rsync sudo unzip wget zip systemd-sysvcompat '
 
     # Development packages
-    packages+=' apache-ant cmake make gcc perl gdb git maven mercurial subversion tcpdump valgrind '
+    packages+=' make gcc perl git '
 
     # Netcfg
     if [ -n "$WIRELESS_DEVICE" ]
