@@ -434,7 +434,7 @@ set_initcpio() {
 
 
     # Set MODULES with your video driver
-    cat > /etc/mkinitcpio.conf <<EOF
+    cat > /etc/cpio.conf <<EOF
 # vim:set ft=sh
 # MODULES
 # The following modules are loaded before any boot hooks are
@@ -510,7 +510,7 @@ HOOKS="base udev autodetect modconf block keymap keyboard $encrypt lvm2 resume f
 EOF
 
 
-    mkinitcpio -p syslinux
+    mkinitcpio -P
 }
 
 set_daemons() {
