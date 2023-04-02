@@ -236,8 +236,8 @@ partition_drive() {
     # 100 MB /boot partition, everything else under LVM
     parted -s "$dev" \
         mklabel msdos \
-        mkpart primary ext2 1 100M \
-        mkpart primary ext2 100M 100% \
+        mkpart primary ext2 1 200M \
+        mkpart primary ext2 200M 100% \
         set 1 boot on \
         set 2 LVM on
 }
