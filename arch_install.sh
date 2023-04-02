@@ -85,6 +85,9 @@ WIRELESS_DEVICE="wlan0"
 #WIRELESS_DEVICE="eth1"
 
 setup() {
+
+    pacman -S syslinux
+    
     local boot_dev="$DRIVE"1
     local lvm_dev="$DRIVE"2
 
@@ -121,7 +124,10 @@ setup() {
 
     echo 'Installing base system'
     install_base
-
+    
+    echo 'Adding pacstrap, before our chroot phase'
+    pacstrap /mnt linux linux-firmware
+    
     echo 'Chrooting into installed system to continue setup...'
     cp $0 /mnt/setup.sh
     arch-chroot /mnt ./setup.sh chroot
@@ -283,7 +289,7 @@ install_base() {
     echo 'Server = http://mirrors.kernel.org/archlinux/$repo/os/$arch' >> /etc/pacman.d/mirrorlist
 
     pacstrap /mnt base base-devel
-    pacstrap /mnt syslinux
+    pacstrap /mnt linux
 }
 
 unmount_filesystems() {
@@ -537,7 +543,8 @@ HOOKS="base udev autodetect modconf block keymap keyboard $encrypt lvm2 resume f
 #COMPRESSION_OPTIONS=""
 EOF
 
-    mkinitcpio -p linux
+
+    mkinitcpio -p syslinux
 }
 
 set_daemons() {
