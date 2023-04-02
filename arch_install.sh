@@ -1,23 +1,7 @@
 #!/bin/bash
-# Copyright (c) 2012 Tom Wambold
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+
+#	needs : add support for a swap dev
+
 
 # This script will set up an Arch installation with a 100 MB /boot partition
 # and an encrypted LVM partition with swap and / inside.  It also installs
@@ -31,24 +15,15 @@
 #    setup_lvm - Customize for partitions inside LVM
 #    install_packages - Customize packages installed in base system
 #                       (desktop environment, etc.)
-#    install_aur_packages - More packages after packer (AUR helper) is
-#                           installed
 #    set_netcfg - Preload netcfg profiles
 
 ## CONFIGURE THESE VARIABLES
-## ALSO LOOK AT THE install_packages FUNCTION TO SEE WHAT IS ACTUALLY INSTALLED
 
 # Drive to install to.
 DRIVE='/dev/sda'
 
 # Hostname of the installed machine.
-HOSTNAME='host100'
-
-# Encrypt everything (except /boot).  Leave blank to disable.
-ENCRYPT_DRIVE='FALSE'
-
-# Passphrase used to encrypt the drive (leave blank to be prompted).
-DRIVE_PASSPHRASE='a'
+HOSTNAME='vbtest'
 
 # Root password (leave blank to be prompted).
 ROOT_PASSWORD='dt'
@@ -64,10 +39,9 @@ TIMEZONE='America/Chicago'
 
 # Have /tmp on a tmpfs or not.  Leave blank to disable.
 # Only leave this blank on systems with very little RAM.
-TMP_ON_TMPFS='FALSE'
+TMP_ON_TMPFS='TRUE'
 
 KEYMAP='us'
-# KEYMAP='dvorak'
 
 # Choose your video driver
 # For Intel
@@ -80,7 +54,7 @@ VIDEO_DRIVER="i915"
 VIDEO_DRIVER="vesa"
 
 # Wireless device, leave blank to not use wireless and use DHCP instead.
-WIRELESS_DEVICE="wlan0"
+WIRELESS_DEVICE=""
 # For tc4200's
 #WIRELESS_DEVICE="eth1"
 
@@ -89,32 +63,13 @@ setup() {
     pacman -S syslinux
     
     local boot_dev="$DRIVE"1
-    local lvm_dev="$DRIVE"2
+    local root_dev="$DRIVE"2
 
     echo 'Creating partitions'
     partition_drive "$DRIVE"
 
-    if [ -n "$ENCRYPT_DRIVE" ]
-    then
-        local lvm_part="/dev/mapper/lvm"
-
-        if [ -z "$DRIVE_PASSPHRASE" ]
-        then
-            echo 'Enter a passphrase to encrypt the disk:'
-            stty -echo
-            read DRIVE_PASSPHRASE
-            stty echo
-        fi
-
-        echo 'Encrypting partition'
-        encrypt_drive "$lvm_dev" "$DRIVE_PASSPHRASE" lvm
-
-    else
-        local lvm_part="$lvm_dev"
-    fi
-
-    echo 'Setting up LVM'
-    setup_lvm "$lvm_part" vg00
+    echo 'Setting up filesystems'
+    setup_filesystems
 
     echo 'Formatting filesystems'
     format_filesystems "$boot_dev"
@@ -126,7 +81,7 @@ setup() {
     echo 'Server = http://mirrors.kernel.org/archlinux/$repo/os/$arch' >> /etc/pacman.d/mirrorlist
   
     echo 'Allow pacstrap for work its magic, before our chroot phase'
-    pacstrap /mnt base vim git linux-lts linux-lts-headers linux linux-headers linux-firmware
+    pacstrap /mnt base linux-lts linux-firmware
        
     echo 'Chrooting into installed system to continue setup...'
     cp $0 /mnt/setup.sh
@@ -145,7 +100,8 @@ setup() {
 
 configure() {
     local boot_dev="$DRIVE"1
-    local lvm_dev="$DRIVE"2
+    local root_dev="$DRIVE"2  
+    #lmv local lvm_dev="$DRIVE"2
 
     echo 'Installing additional packages'
     install_packages
@@ -184,19 +140,10 @@ configure() {
     set_daemons "$TMP_ON_TMPFS"
 
     echo 'Configuring bootloader'
-    set_syslinux "$lvm_dev"
+    set_syslinux "$root_dev"
 
     echo 'Configuring sudo'
     set_sudoers
-
-    #echo 'Configuring slim'
-    #set_slim
-
-    #if [ -n "$WIRELESS_DEVICE" ]
-    #then
-    #    echo 'Configuring netcfg'
-    #    set_netcfg
-    #fi
 
     if [ -z "$ROOT_PASSWORD" ]
     then
@@ -230,64 +177,34 @@ partition_drive() {
     # 100 MB /boot partition, everything else under LVM
     parted -s "$dev" \
         mklabel msdos \
-        mkpart primary ext2 1 1G \
-        mkpart primary ext2 1G 100% \
+        mkpart primary ext2 1 100m \
+        mkpart primary ext2 100m 100% \
         set 1 boot on \
-        set 2 LVM on
-}
-
-encrypt_drive() {
-    local dev="$1"; shift
-    local passphrase="$1"; shift
-    local name="$1"; shift
-
-    echo -en "$passphrase" | cryptsetup -c aes-xts-plain -y -s 512 luksFormat "$dev"
-    echo -en "$passphrase" | cryptsetup luksOpen "$dev" lvm
-}
-
-setup_lvm() {
-    local partition="$1"; shift
-    local volgroup="$1"; shift
-
-    pvcreate "$partition"
-    vgcreate "$volgroup" "$partition"
-
-    # Create a 1GB swap partition
-    lvcreate -C y -L1G "$volgroup" -n swap
-
-    # Use the rest of the space for root
-    lvcreate -l '+100%FREE' "$volgroup" -n root
-
-    # Enable the new volumes
-    vgchange -ay
+        set 2 root on
 }
 
 format_filesystems() {
     local boot_dev="$1"; shift
 
-    mkfs.ext2 -L boot "$boot_dev"
-    mkfs.ext4 -L root /dev/vg00/root
-    mkswap /dev/vg00/swap
+    mkfs.ext2 -L boot "$boot_dev"1
+    mkfs.ext4 -L root "$boot_dev"2
+    #	mkswap "$boot_dev"2
 }
 
 mount_filesystems() {
     local boot_dev="$1"; shift
 
-    mount /dev/vg00/root /mnt
+    mount /dev/root /mnt
     mkdir /mnt/boot
     mount "$boot_dev" /mnt/boot
-    swapon /dev/vg00/swap
+    # swapon /dev/swap
 }
 
 unmount_filesystems() {
     umount /mnt/boot
     umount /mnt
-    swapoff /dev/vg00/swap
+    # swapoff /dev/vg00/swap
     vgchange -an
-    if [ -n "$ENCRYPT_DRIVE" ]
-    then
-        cryptsetup luksClose lvm
-    fi
 }
 
 install_packages() {
