@@ -304,12 +304,12 @@ install_packages() {
     packages+=' vim alacritty alsa-utils aspell-en chromium cpupower gvim mlocate net-tools ntp openssh p7zip pkgfile powertop python python2 rfkill rsync sudo unrar unzip wget zip systemd-sysvcompat zsh grml-zsh-config'
 
     # Development packages
-    packages+=' apache-ant cmake make gcc perl gdb git maven mercurial subversion tcpdump valgrind wireshark-gtk'
+    packages+=' apache-ant cmake make gcc perl gdb git maven mercurial subversion tcpdump valgrind '
 
     # Netcfg
     if [ -n "$WIRELESS_DEVICE" ]
     then
-        packages+=' netcfg ifplugd dialog wireless_tools wpa_actiond wpa_supplicant'
+        packages+=' ifplugd dialog wireless_tools wpa_actiond'
     fi
 
     # Java stuff
