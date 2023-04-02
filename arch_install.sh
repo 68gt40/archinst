@@ -509,7 +509,8 @@ HOOKS="base udev autodetect modconf block keymap keyboard $encrypt lvm2 resume f
 #COMPRESSION_OPTIONS=""
 EOF
 
-
+    pacman -S sed
+    
     mkinitcpio -P
 }
 
