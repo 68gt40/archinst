@@ -189,8 +189,8 @@ configure() {
     echo 'Configuring sudo'
     set_sudoers
 
-    echo 'Configuring slim'
-    set_slim
+    #echo 'Configuring slim'
+    #set_slim
 
     #if [ -n "$WIRELESS_DEVICE" ]
     #then
@@ -315,10 +315,10 @@ install_packages() {
     packages+=' xscreensaver gparted dosfstools ntfsprogs'
 
     # Xserver
-    packages+=' xorg-apps xorg-server xorg-xinit xterm'
+    #packages+=' xorg-apps xorg-server xorg-xinit xterm'
 
     # Slim login manager
-    packages+=' slim archlinux-themes-slim'
+    #packages+=' slim archlinux-themes-slim'
 
     # Fonts
     #packages+=' ttf-dejavu ttf-liberation'
@@ -515,8 +515,8 @@ EOF
 set_daemons() {
     local tmp_on_tmpfs="$1"; shift
 
-    #systemctl enable cronie.service
-    systemctl enable cpupower.service ntpd.service slim.service
+    #systemctl enable cronie.service slim.service
+    systemctl enable cpupower.service ntpd.service
 
 
     if [ -n "$WIRELESS_DEVICE" ]
