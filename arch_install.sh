@@ -519,12 +519,12 @@ set_daemons() {
     systemctl enable cpupower.service ntpd.service
 
 
-    if [ -n "$WIRELESS_DEVICE" ]
-    then
-        systemctl enable net-auto-wired.service net-auto-wireless.service
-    else
+    #if [ -n "$WIRELESS_DEVICE" ]
+    #then
+    #    systemctl enable net-auto-wired.service net-auto-wireless.service
+    #else
         systemctl enable dhcpcd@eth0.service
-    fi
+    #fi
 
     if [ -z "$tmp_on_tmpfs" ]
     then
