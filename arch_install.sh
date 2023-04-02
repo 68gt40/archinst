@@ -126,8 +126,8 @@ setup() {
     echo 'Server = http://mirrors.kernel.org/archlinux/$repo/os/$arch' >> /etc/pacman.d/mirrorlist
   
     echo 'Allow pacstrap for work its magic, before our chroot phase'
-    pacstrap /mnt linux linux-firmware
-    
+    pacstrap /mnt base vim git linux-lts linux-lts-headers linux linux-headers linux-firmware
+       
     echo 'Chrooting into installed system to continue setup...'
     cp $0 /mnt/setup.sh
     arch-chroot /mnt ./setup.sh chroot
