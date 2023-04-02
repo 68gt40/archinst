@@ -121,11 +121,11 @@ setup() {
 
     echo 'Mounting filesystems'
     mount_filesystems "$boot_dev"
-
-    echo 'Installing base system'
-    install_base
-    
-    echo 'Adding pacstrap, before our chroot phase'
+   
+    echo 'Build initial mirrorlist'
+    echo 'Server = http://mirrors.kernel.org/archlinux/$repo/os/$arch' >> /etc/pacman.d/mirrorlist
+  
+    echo 'Allow pacstrap for work its magic, before our chroot phase'
     pacstrap /mnt linux linux-firmware
     
     echo 'Chrooting into installed system to continue setup...'
@@ -149,12 +149,6 @@ configure() {
 
     echo 'Installing additional packages'
     install_packages
-
-    #echo 'Installing packer'
-    #install_packer
-
-    #echo 'Installing AUR packages'
-    #install_aur_packages
 
     echo 'Clearing package tarballs'
     clean_packages
@@ -236,8 +230,8 @@ partition_drive() {
     # 100 MB /boot partition, everything else under LVM
     parted -s "$dev" \
         mklabel msdos \
-        mkpart primary ext2 1 200M \
-        mkpart primary ext2 200M 100% \
+        mkpart primary ext2 1 1G \
+        mkpart primary ext2 1G 100% \
         set 1 boot on \
         set 2 LVM on
 }
@@ -283,13 +277,6 @@ mount_filesystems() {
     mkdir /mnt/boot
     mount "$boot_dev" /mnt/boot
     swapon /dev/vg00/swap
-}
-
-install_base() {
-    echo 'Server = http://mirrors.kernel.org/archlinux/$repo/os/$arch' >> /etc/pacman.d/mirrorlist
-
-    pacstrap /mnt base base-devel
-    pacstrap /mnt linux
 }
 
 unmount_filesystems() {
@@ -360,27 +347,6 @@ install_packages() {
     fi
 
     pacman -Sy --noconfirm $packages
-}
-
-install_packer() {
-    mkdir /foo
-    cd /foo
-    curl https://aur.archlinux.org/packages/pa/packer/packer.tar.gz | tar xzf -
-    cd packer
-    makepkg -si --noconfirm --asroot
-
-    cd /
-    rm -rf /foo
-}
-
-install_aur_packages() {
-    mkdir /foo
-    export TMPDIR=/foo
-    packer -S --noconfirm android-udev
-    packer -S --noconfirm chromium-pepper-flash-stable
-    packer -S --noconfirm chromium-libpdf-stable
-    unset TMPDIR
-    rm -rf /foo
 }
 
 clean_packages() {
